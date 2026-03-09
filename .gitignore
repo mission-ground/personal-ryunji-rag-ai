@@ -1,0 +1,21 @@
+# python
+__pycache__/
+*.pyc
+
+# virtual environment
+venv/
+env/
+rag_env/
+
+# vscode
+.vscode/
+
+# python build
+dist/
+build/
+*.egg-info/
+
+# mac
+.DS_Store
+
+backend/data/raw
