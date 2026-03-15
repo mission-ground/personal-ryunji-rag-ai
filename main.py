@@ -3,10 +3,10 @@
 # main.py
 # 역할: 각 클래스를 조립해서 전체 RAG 파이프라인을 실행한다.
 
-from backend.service.rag.ingestion.index_builder import IndexBuilder
-from backend.service.rag.components.vectorstore.faiss.vector_store import VectorStore
-from backend.service.rag.components.embedding.embedder import Embedder
-from backend.service.rag.rag_pipeline import RAGPipeline
+from service.rag.ingestion.index_builder import IndexBuilder
+from service.rag.components.vectorstore.faiss.vector_store import VectorStore
+from service.rag.components.embedding.embedder import Embedder
+from service.rag.rag_pipeline import RAGPipeline
 
 #1. 데이터 로드 → 청킹 → 임베딩 → 벡터DB 저장 → 검색 → 답변 생성
 

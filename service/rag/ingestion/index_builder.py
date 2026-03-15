@@ -1,7 +1,7 @@
 from pypdf import PdfReader
-from backend.service.rag.components.embedding.embedder import Embedder
-from backend.service.rag.ingestion.chunker import Chunker
-from backend.service.rag.components.vectorstore.faiss.vector_store import VectorStore
+from service.rag.components.embedding.embedder import Embedder
+from service.rag.ingestion.chunker import Chunker
+from service.rag.components.vectorstore.chroma.vector_store import VectorStore
 
 # RAG ingestion 파이프라인을 하나의 객체로 캡슐화
 # 외부에서는 build()만 호출하지만 실제로 내부에서는
@@ -34,7 +34,7 @@ class IndexBuilder:
     def load_documents(self):
 
         # 왜 PdfReader를 썼는지 찾아내야 한다..
-        reader = PdfReader("backend/data/raw/pdf/북브리프_돈의심리학.pdf")
+        reader = PdfReader("data/raw/pdf/북브리프_돈의심리학.pdf")
         docs = []
 
         for page in reader.pages:
