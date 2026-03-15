@@ -22,6 +22,7 @@ class Chunker:
 
         start = 0
 
+        # 사이즈는 결국 전체 문서의 길이를 의미
         while start < len(tokens):
 
             end = start + self.chunk_size

@@ -6,11 +6,20 @@ import pickle
 class VectorStore:
 
     def __init__(self, dimension=384):
+        
+        # IndexFlatL2 = L2 거리(유클리드 거리) 기반 유사도 검색
+        # dimension = embedding 벡터의 차원 (MiniLM 모델은 384차원)
         self.index = faiss.IndexFlatL2(dimension)
+        
+        # 벡터 id -> 문서 metadata 매핑 저장
+        # 예: {0: {"text": "...", "page":1, "chunk":2}}
         self.documents = {}     # vector_id → metadata
+        
+        # 새 벡터가 들어올 때 사용할 ID 카운터
         self.current_id = 0
 
     # 1. 벡터 저장
+    # 여기서 vectors는 text를 임베딩 처리한 값.
     def add_documents(self, vectors, docs):
 
         vectors = np.array(vectors).astype("float32")
