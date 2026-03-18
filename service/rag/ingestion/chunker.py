@@ -3,15 +3,12 @@ import unicodedata
 
 class Chunker:
 
-    def __init__(
-          self
-        , model_name="sentence-transformers/all-MiniLM-L6-v2"
-        , chunk_size=256
-        , overlap=50
+    # 임베딩 의존성 주입, 모델이 바뀌어도 Embedder만 교체하면 Chunker도 자동으로 따라감.
+    def __init__(self, embedder, chunk_size=128, overlap=50
     ):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer  = embedder.model.tokenizer  # Embedder 모델에서 토크나이저 꺼냄
         self.chunk_size = chunk_size
-        self.overlap = overlap
+        self.overlap    = overlap
 
     def split(self, text, page):
 

@@ -10,11 +10,10 @@ class IndexBuilder:
 
     # 생성자, IndexBuilder 인스턴스가 생성되면 하위의 코드를 실행한다.
     # 작업 준비를 하는 것, 준비물 사놓기.
-    def __init__(self, loader: BaseLoader):
+    def __init__(self):
         
-        self.loader   = loader
         self.embedder = Embedder()                                      # 1. 임베딩을 처리할 모델을 준비한다.        
-        self.chunker  = Chunker(embedder=self.embedder)                 # 2. load 된 데이터를 청킹할 청커를 준비한다. 임베딩 모델 주입.
+        self.chunker  = Chunker()                                       # 2. load 된 데이터를 청킹할 청커를 준비한다.
         self.vector_store = VectorStore()                               # 3. 처리된 문서 데이터를 저장할 벡터DB 준비한다.
 
     # build_index.py 파일에서 호출된 메서드가 호출되어 실제로 처리되는 곳
@@ -28,15 +27,26 @@ class IndexBuilder:
         self.vector_store.add_documents(vectors, chunks)
         return self.embedder, self.vector_store
     
+ 
+    # ──────────────────────────────────────────────────────────────
+    # loader_type : "fitz" | "pdfplumber" (기본값 "pdfplumber")
+    # pdf_path    : PDF 파일 경로 (기본값 유지)
+    # ──────────────────────────────────────────────────────────────
+    def load_documents(
+        self,
+        loader_type: Literal["fitz", "pdfplumber"] = "pdfplumber",
+        pdf_path: str = "data/raw/pdf/북브리프_돈의심리학.pdf",
+    ) -> list[str]:
+ 
+        if loader_type == "fitz":
+            return self._load_with_fitz(pdf_path)
+        elif loader_type == "pdfplumber":
+            return self._load_with_pdfplumber(pdf_path)
+        else:
+            raise ValueError(f"지원하지 않는 loader_type: '{loader_type}' — 'fitz' 또는 'pdfplumber' 중 선택하세요.")
+    
     def load_documents(self, pdf_path: str = "data/raw/pdf/북브리프_돈의심리학.pdf") -> list[str]:
-        pages = self.loader.load(pdf_path)
-        return self._remove_header(pages)
-
-    def _remove_header(self, pages: list[str], header_lines: int = 3) -> list[str]:
-        if not pages:
-            return pages
-        header = "\n".join(pages[0].split("\n")[:header_lines])
-        return [p[len(header):].strip() if p.startswith(header) else p for p in pages]
+        return self.loader.load(pdf_path)
     
     def chunk_documents(self, documents):
 

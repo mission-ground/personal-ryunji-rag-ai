@@ -1,20 +1,22 @@
-import pdfplumber
-import fitz
-from typing import Literal
+from pypdf import PdfReader
 from service.rag.components.embedding.embedder import Embedder
 from service.rag.ingestion.chunker import Chunker
 from service.rag.components.vectorstore.chroma.vector_store import VectorStore
-from service.rag.ingestion.loader.base_loader import BaseLoader
 
+# RAG ingestion 파이프라인을 하나의 객체로 캡슐화
+# 외부에서는 build()만 호출하지만 실제로 내부에서는
+# 문서 로딩 → 청킹 → 임베딩 → 벡터DB 저장 여러 단계가 실행됨.
+# 복잡한 내부 과정을 숨기고 하나의 메서드로 제공한다 → 캡슐화
+# ingestion = 데이터를 시스템에 넣는 과정
+# 여기서는 문서를 벡터화하여 DB에 저장하는 작업이 됨.
 class IndexBuilder:
 
     # 생성자, IndexBuilder 인스턴스가 생성되면 하위의 코드를 실행한다.
     # 작업 준비를 하는 것, 준비물 사놓기.
-    def __init__(self, loader: BaseLoader):
+    def __init__(self):
         
-        self.loader   = loader
         self.embedder = Embedder()                                      # 1. 임베딩을 처리할 모델을 준비한다.        
-        self.chunker  = Chunker(embedder=self.embedder)                 # 2. load 된 데이터를 청킹할 청커를 준비한다. 임베딩 모델 주입.
+        self.chunker  = Chunker()                                       # 2. load 된 데이터를 청킹할 청커를 준비한다.
         self.vector_store = VectorStore()                               # 3. 처리된 문서 데이터를 저장할 벡터DB 준비한다.
 
     # build_index.py 파일에서 호출된 메서드가 호출되어 실제로 처리되는 곳
@@ -28,15 +30,22 @@ class IndexBuilder:
         self.vector_store.add_documents(vectors, chunks)
         return self.embedder, self.vector_store
     
-    def load_documents(self, pdf_path: str = "data/raw/pdf/북브리프_돈의심리학.pdf") -> list[str]:
-        pages = self.loader.load(pdf_path)
-        return self._remove_header(pages)
+    # 추후 Loader를 따로 파일 만들어야 겠다.
+    def load_documents(self):
 
-    def _remove_header(self, pages: list[str], header_lines: int = 3) -> list[str]:
-        if not pages:
-            return pages
-        header = "\n".join(pages[0].split("\n")[:header_lines])
-        return [p[len(header):].strip() if p.startswith(header) else p for p in pages]
+        # 추후에 분기문으로 파일의 확장자에 따라 처리하는 로직을 넣자
+        # 왜 PdfReader를 썼는지 찾아내야 한다..
+        reader = PdfReader("data/raw/pdf/북브리프_돈의심리학.pdf")
+        docs = []
+
+        for page in reader.pages:
+            # 페이지 개수만큼 for문을 돌면서 한페이지의 텍스트를 추출
+            text = page.extract_text("plain")
+
+            #print("text : ", text)
+            if text:
+                docs.append(text)
+        return docs
     
     def chunk_documents(self, documents):
 
@@ -55,11 +64,5 @@ class IndexBuilder:
         texts = [c["text"] for c in chunks]
         return self.embedder.embed(texts)
     
-    def clean_text(self, text):
-        return (
-            text.replace("\u00a0", " ")
-                .replace("\r", "\n")
-                .strip()
-        )
 
     

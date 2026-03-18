@@ -1,11 +1,12 @@
 import chromadb
 
-
 class VectorStore:
 
     def __init__(self):
         self.client = chromadb.PersistentClient(path="chroma_db")
-        self.collection = self.client.get_or_create_collection(name="documents")
+        self.collection = self.client.get_or_create_collection(  name="documents"
+                                                               , metadata={"hnsw:space": "cosine"}  # 추가
+                                                               )
         self.current_id = self.collection.count()
 
     def add_documents(self, vectors, docs):
@@ -48,19 +49,29 @@ class VectorStore:
             print(data["documents"][i])
             print("-" * 60)
 
-    def search(self, query_vector, k=3):
+    # 검색
+    def search(self, query_vector, k=3, threshold=0.4):  # threshold 추가
+        
         results = self.collection.query(
-            query_embeddings=[query_vector],
-            n_results=k
+              query_embeddings=[query_vector]
+            , n_results=k
         )
 
         output = []
 
         for i in range(len(results["documents"][0])):
+            
+            distance = results["distances"][0][i]
+            similarity = 1 - distance
+            
+            if similarity < threshold:  # 임계값 이하 제거
+                continue
+            
             output.append({
                 "text": results["documents"][0][i],
                 "page": results["metadatas"][0][i]["page"],
-                "chunk": results["metadatas"][0][i]["chunk"]
+                "chunk": results["metadatas"][0][i]["chunk"],
+                "distance": results["distances"][0][i]  # 추가
             })
 
         return output

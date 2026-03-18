@@ -1,5 +1,5 @@
-from backend.service.rag.retrieval.retriever import Retriever
-from backend.service.rag.generation.generator import Generator
+from service.rag.retrieval.retriever import Retriever
+from service.rag.generation.generator import Generator
 
 # 사람으로 따지면 감독.
 class RAGPipeline:
