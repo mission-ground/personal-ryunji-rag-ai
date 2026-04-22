@@ -1,8 +1,12 @@
 import chromadb
+import logging
+from typing import List, Dict, Any
 
 class VectorStore:
 
     def __init__(self):
+        
+        # 유사도가 음수 
         self.client = chromadb.PersistentClient(path="chroma_db")
         self.collection = self.client.get_or_create_collection(  name="documents"
                                                                , metadata={"hnsw:space": "cosine"}  # 추가
@@ -50,28 +54,38 @@ class VectorStore:
             print("-" * 60)
 
     # 검색
-    def search(self, query_vector, k=3, threshold=0.4):  # threshold 추가
+    # : 유사도 임계값(threshold)를 설정함.
+    """
+        검색 로직 - 결과가 없을 경우의 처리와 데이터 구조 최적화
+    """
+    def search(self, query_vector : List[float], k : int = 3, threshold: float = 0.4) -> List[Dict[str, Any]]: # threshold 추가
         
-        results = self.collection.query(
-              query_embeddings=[query_vector]
-            , n_results=k
-        )
+        try:
+            results = self.collection.query(
+                  query_embeddings=[query_vector]
+                , n_results = k
+            )
 
-        output = []
+            # 결과가 아예 없는 경우 방어 코드를 통해 [](빈 리스트)를 넘긴다.
+            if not results or not results["documents"] or not results["documents"][0]:
+                return []
+            
+            output = []
+            # results["distances"][0] 등의 리스트를 zip으로 묶으면 훨씬 '파이썬'스럽고 깔끔합니다.
+            for doc, meta, dist in zip(results["documents"][0], results["metadatas"][0], results["distances"][0]):
+                
+                similarity = 1 - dist
+                if similarity >= threshold:
+                    output.append({
+                          "text": doc
+                        , "page": meta.get("page")
+                        , "chunk": meta.get("chunk")
+                        , "similarity": round(similarity, 4)
+                    })
+            
+            # 유사도 높은 순으로 정렬 (이미 되어있겠지만 명시적 확인)
+            return sorted(output, key=lambda x: x['similarity'], reverse=True)
 
-        for i in range(len(results["documents"][0])):
-            
-            distance = results["distances"][0][i]
-            similarity = 1 - distance
-            
-            if similarity < threshold:  # 임계값 이하 제거
-                continue
-            
-            output.append({
-                "text": results["documents"][0][i],
-                "page": results["metadatas"][0][i]["page"],
-                "chunk": results["metadatas"][0][i]["chunk"],
-                "distance": results["distances"][0][i]  # 추가
-            })
-
-        return output
+        except Exception as e:
+            logging.error(f"검색 중 오류 발생: {e}")
+            return []

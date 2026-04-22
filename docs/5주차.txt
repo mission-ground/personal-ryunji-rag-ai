@@ -1,0 +1,33 @@
+바 개발자 입장에서 보면 String query 하나 받으려고 클래스를 만드는 게 굉장히 과하게 느껴질 수 있습니다. 자바였으면 그냥 @RequestParam String query로 끝냈을 테니까요.
+
+하지만 파이썬 FastAPI 진영에서 **Pydantic의 BaseModel**을 상속받아 DTO(Data Transfer Object)를 만드는 건, 자바 스프링에서 @RequestBody에 대응하는 객체를 만드는 것과 정확히 같은 정석적인 절차입니다.
+
+왜 굳이 이렇게 하는지, 그 "이득"을 세 가지만 짚어드릴게요.
+
+1. 강력한 타입 밸리데이션 (Validation)
+파이썬은 기본적으로 동적 타입 언어지만, 실제 서비스에서는 "이 데이터가 진짜 문자열인지", "빈 값은 아닌지" 체크가 필수입니다.
+
+BaseModel을 상속받으면, 들어오는 JSON 데이터를 검증해서 타입이 안 맞으면 알아서 422 Unprocessable Entity 에러를 뱉어줍니다.
+
+자바에서 **@Valid**나 @NotNull 같은 어노테이션 역할을 이 클래스가 대신 해주는 거죠.
+
+2. API 문서 자동화 (Swagger)
+FastAPI의 최대 장점인데, 이렇게 클래스로 정의해두면 서버 실행 후 /docs 주소로 접속했을 때 Swagger UI가 자동으로 생성됩니다.
+
+"이 API는 query라는 키값을 가진 JSON 문자열을 받아야 한다"는 명세가 이 클래스 하나로 끝납니다. 프론트엔드 개발자랑 협업할 때 "문서 봐"라고 말할 수 있게 되는 근거가 바로 이 클래스입니다.
+
+3. 구조적 확장성
+지금은 질문(query) 하나지만, 실제 서비스를 운영하다 보면 넘겨줄 데이터가 급격히 늘어납니다.
+
+top_k: "검색 결과 몇 개 가져올래?"
+
+use_cache: "캐시 사용할래?"
+
+model_name: "어떤 LLM 모델 쓸래?"
+이런 값들이 추가될 때 클래스에 필드만 한 줄 추가하면 끝납니다. 만약 클래스 없이 함수 파라미터로 다 받았다면 나중에 유지보수 지옥이 펼쳐질 거예요.
+
+@Getter @Setter
+public class QuestionRequest {
+    @NotBlank
+    private String query;
+}

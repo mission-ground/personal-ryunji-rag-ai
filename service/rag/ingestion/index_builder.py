@@ -32,6 +32,8 @@ class IndexBuilder:
         pages = self.loader.load(pdf_path)
         return self._remove_header(pages)
 
+    # 검색 품질을 높이기 위해 추가된 부분
+    # : 헤더 제거 후 저장한다.
     def _remove_header(self, pages: list[str], header_lines: int = 3) -> list[str]:
         if not pages:
             return pages
