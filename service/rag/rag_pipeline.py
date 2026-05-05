@@ -1,6 +1,12 @@
 from service.rag.retrieval.retriever import Retriever
 from service.rag.generation.generator import Generator
+from service.rag.components.embedding.embedder import Embedder
+from service.rag.components.vectorstore.chroma.vector_store import VectorStore
 
+
+
+
+# 파일명은 snake_case, 클래스는 PascalCase가 맞음.
 # 사람으로 따지면 감독.
 class RAGPipeline:
 
@@ -17,4 +23,4 @@ class RAGPipeline:
 
         answer = self.generator.generate(query, context)
 
-        return answer
+        return answer    
